@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>FF Admin Enterprise</title>
+<title>FF Dashboard Enterprise</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -12,17 +12,24 @@
 body{
 margin:0;
 font-family:'Prompt',sans-serif;
-background:linear-gradient(180deg,#f6f1ff,#e8dcff,#d6c8ff);
+background:linear-gradient(180deg,#f6f0ff,#efeafd,#e4d9f7);
 overflow-x:hidden;
+padding:40px 20px;
 }
 
-/* bubbles */
+/* ===== Floating Bubbles ===== */
 .bubble{
 position:fixed;
-bottom:-160px;
+bottom:-150px;
 border-radius:50%;
-background:radial-gradient(circle at 30% 30%,#fff,#caa6ff,#ffb6e6);
-opacity:.35;
+background:radial-gradient(circle at 30% 30%,
+rgba(255,255,255,.9),
+rgba(173,216,255,.4),
+rgba(202,166,255,.3),
+rgba(255,158,214,.25));
+box-shadow:
+0 0 60px rgba(200,150,255,.4),
+inset 0 0 30px rgba(255,255,255,.9);
 animation:floatUp linear infinite;
 z-index:-1;
 }
@@ -30,246 +37,310 @@ z-index:-1;
 to{transform:translateY(-120vh);}
 }
 
-/* layout */
-.container{padding:40px;max-width:1400px;margin:auto;}
-.section{margin-bottom:50px;}
-.title{
+/* ===== Layout ===== */
+.container{
+max-width:1400px;
+margin:auto;
+}
+
+h1{
 font-size:28px;
 font-weight:800;
-margin-bottom:25px;
+margin-bottom:30px;
 background:linear-gradient(90deg,#6ed0ff,#ff7fbf);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 }
 
-/* glass card */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
 .card{
-background:rgba(255,255,255,.75);
-backdrop-filter:blur(20px);
-border-radius:28px;
-padding:25px;
-box-shadow:0 30px 80px rgba(180,140,255,.25);
+background:white;
+padding:20px;
+border-radius:25px;
+box-shadow:0 20px 50px rgba(150,120,240,.25);
+transition:.3s;
+}
+.card:hover{
+transform:translateY(-5px);
 }
 
-/* KPI */
-.kpi-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:20px;
-}
-.kpi{
-text-align:center;
-}
-.kpi h4{margin:0;font-size:14px;color:#6a5acd;}
-.kpi .num{
-font-size:32px;
+.count{
+font-size:34px;
 font-weight:800;
-background:linear-gradient(90deg,#6ed0ff,#ff7fbf);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+margin-top:10px;
+color:#6b46c1;
 }
 
-/* status matrix */
-.matrix{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
+.status-box{
+margin-top:10px;
+font-size:13px;
 }
-.status-card{
-font-size:14px;
+
+input,select,button{
+padding:10px;
+border-radius:12px;
+border:none;
+font-family:'Prompt';
 }
-.status-card h3{
-margin-top:0;
-font-size:16px;
-color:#6a5acd;
-}
-.badge{
-display:inline-block;
-padding:5px 12px;
-border-radius:999px;
-font-size:12px;
+
+button{
+cursor:pointer;
+background:linear-gradient(90deg,#a78bfa,#f0abfc);
+color:white;
 font-weight:600;
-margin-bottom:10px;
 }
 
-/* table */
 table{
 width:100%;
+margin-top:25px;
 border-collapse:collapse;
 }
+
 th,td{
 padding:10px;
 font-size:13px;
-border-bottom:1px solid rgba(200,150,255,.2);
-}
-th{
+border-bottom:1px solid #eee;
 text-align:left;
-color:#6a5acd;
 }
 
-/* live feed */
-.feed{
+th{
+background:#faf8ff;
+}
+
+tr:hover{
+background:#f7f3ff;
+}
+
+/* toast */
+.toast{
 position:fixed;
-bottom:20px;
-left:20px;
-background:rgba(255,255,255,.8);
-backdrop-filter:blur(15px);
-border-radius:20px;
-padding:15px;
-width:260px;
-box-shadow:0 20px 60px rgba(170,140,255,.3);
-font-size:13px;
+top:30px;
+right:30px;
+background:#6b46c1;
+color:white;
+padding:15px 25px;
+border-radius:15px;
+opacity:0;
+transform:translateY(-20px);
+transition:.3s;
 }
-.feed h4{margin:0 0 10px 0;font-size:14px;}
-.feed-item{margin-bottom:8px;}
-
-canvas{max-height:300px;}
+.toast.show{
+opacity:1;
+transform:translateY(0);
+}
 </style>
 </head>
 
 <body>
 
 <!-- bubbles -->
-<div class="bubble" style="left:10%;width:130px;height:130px;animation-duration:30s;"></div>
-<div class="bubble" style="left:40%;width:90px;height:90px;animation-duration:22s;"></div>
-<div class="bubble" style="left:70%;width:150px;height:150px;animation-duration:35s;"></div>
+<div class="bubble" style="left:5%;width:130px;height:130px;animation-duration:35s;"></div>
+<div class="bubble" style="left:30%;width:90px;height:90px;animation-duration:25s;"></div>
+<div class="bubble" style="left:60%;width:160px;height:160px;animation-duration:40s;"></div>
+<div class="bubble" style="left:80%;width:100px;height:100px;animation-duration:28s;"></div>
 
 <div class="container">
 
-<!-- KPI STRIP -->
-<div class="section">
-<div class="title">Dashboard Overview</div>
-<div class="card kpi-grid" id="kpis"></div>
-</div>
+<h1>🚀 Friend Follow Dashboard</h1>
 
-<!-- Revenue -->
-<div class="section">
+<!-- KPI -->
+<div class="grid">
+
 <div class="card">
-<h3>📈 รายได้ย้อนหลัง 7 วัน</h3>
-<canvas id="revenueChart"></canvas>
-</div>
-</div>
-
-<!-- Status Matrix -->
-<div class="section">
-<div class="title">สถานะทั้งหมด</div>
-<div class="matrix" id="matrix"></div>
-</div>
-
-<!-- Service + Recent -->
-<div class="section">
-<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:30px;">
-<div class="card">
-<h3>🍭 Service Breakdown</h3>
-<canvas id="serviceChart"></canvas>
+รายได้วันนี้
+<div class="count" id="revToday">0</div>
 </div>
 
 <div class="card">
-<h3>📋 10 ออเดอร์ล่าสุด</h3>
-<div style="overflow-x:auto;">
-<table id="recentTable"></table>
+ออเดอร์วันนี้
+<div class="count" id="orderToday">0</div>
 </div>
-</div>
-</div>
+
+<div class="card">
+<h3>7 Day Revenue</h3>
+<canvas id="chart7"></canvas>
 </div>
 
 </div>
 
-<!-- Live Feed -->
-<div class="feed">
-<h4>🔔 Live Activity</h4>
-<div id="feedItems"></div>
+<br>
+
+<!-- Create Order -->
+<div class="card">
+<h3>➕ สร้างออเดอร์ใหม่</h3>
+<input id="name" placeholder="ชื่อลูกค้า">
+<input id="service" placeholder="บริการ">
+<input id="price" type="number" placeholder="ราคา">
+<select id="status">
+<option>รอชำระเงิน</option>
+<option>ชำระเงินแล้ว</option>
+<option>กำลังดำเนินการ</option>
+<option>เสร็จงาน</option>
+<option>ยกเลิก</option>
+<option>หมดประกัน</option>
+</select>
+<button onclick="createOrder()">สร้างออเดอร์</button>
 </div>
+
+<br>
+
+<!-- Search -->
+<input id="search" placeholder="ค้นหา Order / ลูกค้า" onkeyup="filterTable()">
+
+<!-- Table -->
+<table id="orderTable">
+<thead>
+<tr>
+<th>วันที่</th>
+<th>Order</th>
+<th>ลูกค้า</th>
+<th>บริการ</th>
+<th>ราคา</th>
+<th>สถานะ</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</div>
+
+<div class="toast" id="toast">บันทึกสำเร็จ</div>
 
 <script>
 
 const API_URL="https://script.google.com/macros/s/AKfycby6v_nn7sTs1kEfW2yl4QR8-P4u2FxhVdUsBMD5UMLuvpdZYY7CeY6iUmL0uVm2PeVh/exec";
-let revenueChart,serviceChart;
 
+let chart;
+
+/* ===== Load Dashboard ===== */
 async function loadDashboard(){
 
 const res=await fetch(API_URL);
 const data=await res.json();
 
-/* KPIs */
-document.getElementById("kpis").innerHTML=`
-<div class="kpi"><h4>💰 รายได้วันนี้</h4><div class="num">${data.revenueToday.toLocaleString()}</div></div>
-<div class="kpi"><h4>📦 ออเดอร์วันนี้</h4><div class="num">${data.ordersToday}</div></div>
-<div class="kpi"><h4>⏳ รอชำระ</h4><div class="num">${data.statusSummary["รอชำระเงิน"].length}</div></div>
-<div class="kpi"><h4>🚀 กำลังทำ</h4><div class="num">${data.statusSummary["กำลังดำเนินการ"].length}</div></div>
-<div class="kpi"><h4>✅ เสร็จงาน</h4><div class="num">${data.statusSummary["เสร็จงาน"].length}</div></div>
-<div class="kpi"><h4>🛠 รอเคลม</h4><div class="num">${data.statusSummary["รอเคลม"].length}</div></div>
-<div class="kpi"><h4>⚪ หมดประกัน</h4><div class="num">${data.statusSummary["หมดประกัน"].length}</div></div>
-`;
+document.getElementById("revToday").innerText=data.revenueToday;
+document.getElementById("orderToday").innerText=data.ordersToday;
 
-/* Revenue Chart */
-if(revenueChart) revenueChart.destroy();
-revenueChart=new Chart(document.getElementById("revenueChart"),{
-type:'line',
+renderTable(data.recentOrders);
+renderChart(data.revenue7days);
+}
+
+/* ===== Table ===== */
+function renderTable(list){
+
+const tbody=document.querySelector("#orderTable tbody");
+tbody.innerHTML="";
+
+list.forEach(order=>{
+tbody.innerHTML+=`
+<tr>
+<td>${order.date}</td>
+<td>${order.order}</td>
+<td>${order.name}</td>
+<td>${order.service}</td>
+<td>
+<input value="${order.price}"
+onchange="updateField('${order.order}','ราคา',this.value)">
+</td>
+<td>
+<select onchange="updateField('${order.order}','สถานะ',this.value)">
+${statusOptions(order.status)}
+</select>
+</td>
+</tr>
+`;
+});
+}
+
+function statusOptions(current){
+const options=["รอชำระเงิน","ชำระเงินแล้ว","กำลังดำเนินการ","เสร็จงาน","ยกเลิก","หมดประกัน"];
+return options.map(o=>`<option ${o===current?"selected":""}>${o}</option>`).join("");
+}
+
+/* ===== Update ===== */
+async function updateField(orderId,field,value){
+await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"updateOrder",
+orderId,
+field,
+value
+})
+});
+showToast();
+loadDashboard();
+}
+
+/* ===== Create ===== */
+async function createOrder(){
+
+const orderData={
+"วันที่สั่ง":new Date().toLocaleDateString("en-GB"),
+"ชื่อลูกค้า":document.getElementById("name").value,
+"รหัสออเดอร์":"FF-"+Date.now(),
+"บริการ":document.getElementById("service").value,
+"ราคา":document.getElementById("price").value,
+"สถานะ":document.getElementById("status").value
+};
+
+await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"createOrder",
+order:orderData
+})
+});
+
+showToast();
+loadDashboard();
+}
+
+/* ===== Chart ===== */
+function renderChart(data){
+
+const ctx=document.getElementById("chart7").getContext("2d");
+if(chart) chart.destroy();
+
+chart=new Chart(ctx,{
+type:"line",
 data:{
-labels:["6d","5d","4d","3d","2d","1d","Today"],
+labels:["-6","-5","-4","-3","-2","-1","Today"],
 datasets:[{
 label:"Revenue",
-data:data.revenue7days,
+data:data,
 borderColor:"#a78bfa",
 backgroundColor:"rgba(167,139,250,.2)",
-tension:.4,
 fill:true
 }]
 }
 });
-
-/* Status Matrix */
-const matrix=document.getElementById("matrix");
-matrix.innerHTML="";
-for(let status in data.statusSummary){
-matrix.innerHTML+=`
-<div class="card status-card">
-<h3>${status}</h3>
-<div style="font-weight:700;font-size:26px;">${data.statusSummary[status].length}</div>
-${data.statusSummary[status].slice(0,3).map(o=>`<div>• ${o.name}</div>`).join("")}
-</div>
-`;
 }
 
-/* Service Chart */
-if(serviceChart) serviceChart.destroy();
-serviceChart=new Chart(document.getElementById("serviceChart"),{
-type:'doughnut',
-data:{
-labels:Object.keys(data.serviceStats),
-datasets:[{
-data:Object.values(data.serviceStats),
-backgroundColor:["#ff9ed6","#8fd3ff","#caa6ff"]
-}]
-},
-options:{cutout:"65%"}
+/* ===== Search ===== */
+function filterTable(){
+const value=document.getElementById("search").value.toLowerCase();
+document.querySelectorAll("#orderTable tbody tr").forEach(row=>{
+row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
 });
+}
 
-/* Recent Table */
-let table="<tr><th>รหัส</th><th>ลูกค้า</th><th>บริการ</th><th>ราคา</th><th>สถานะ</th></tr>";
-data.recentOrders.forEach(o=>{
-table+=`<tr>
-<td>${o.order}</td>
-<td>${o.name}</td>
-<td>${o.service}</td>
-<td>${o.price}</td>
-<td>${o.status}</td>
-</tr>`;
-});
-document.getElementById("recentTable").innerHTML=table;
-
-/* Live Feed */
-document.getElementById("feedItems").innerHTML=
-data.recentOrders.slice(0,5)
-.map(o=>`<div class="feed-item">📦 ${o.name} → ${o.status}</div>`)
-.join("");
-
+/* ===== Toast ===== */
+function showToast(){
+const t=document.getElementById("toast");
+t.classList.add("show");
+setTimeout(()=>t.classList.remove("show"),2000);
 }
 
 loadDashboard();
 setInterval(loadDashboard,15000);
 
 </script>
+
 </body>
 </html>
