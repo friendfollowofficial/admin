@@ -149,6 +149,24 @@ transform:translateY(0);
 <h1>🚀 Friend Follow Dashboard</h1>
 
 <!-- KPI -->
+
+<h2>สถานะทั้งหมด</h2>
+<div class="grid" id="statusSection"></div>
+<br>
+
+<div class="grid">
+<div class="card">
+<h3>Service Breakdown</h3>
+<canvas id="serviceChart"></canvas>
+</div>
+
+<div class="card">
+<h3>10 ออเดอร์ล่าสุด</h3>
+<div id="recentBox"></div>
+</div>
+</div>
+
+  
 <div class="grid">
 
 <div class="card">
@@ -215,41 +233,131 @@ transform:translateY(0);
 
 const API_URL="https://script.google.com/macros/s/AKfycby6v_nn7sTs1kEfW2yl4QR8-P4u2FxhVdUsBMD5UMLuvpdZYY7CeY6iUmL0uVm2PeVh/exec";
 
-let chart;
+let chart7;
+let serviceChart;
+let allOrders=[];
 
-/* ===== Load Dashboard ===== */
+/* ================= LOAD ================= */
 async function loadDashboard(){
-
 const res=await fetch(API_URL);
 const data=await res.json();
 
-document.getElementById("revToday").innerText=data.revenueToday;
-document.getElementById("orderToday").innerText=data.ordersToday;
+allOrders=data.recentOrders || [];
 
-renderTable(data.recentOrders);
-renderChart(data.revenue7days);
+renderKPI(data);
+render7DayChart(data.revenue7days || []);
+renderStatus(data.statusSummary || {});
+renderService(data.serviceStats || {});
+renderRecent(data.recentOrders || []);
+renderTable(data.recentOrders || []);
 }
 
-/* ===== Table ===== */
+/* ================= KPI ================= */
+function renderKPI(data){
+document.getElementById("revToday").innerText=(data.revenueToday||0).toLocaleString();
+document.getElementById("orderToday").innerText=data.ordersToday||0;
+}
+
+/* ================= 7 DAY CHART ================= */
+function render7DayChart(list){
+
+const ctx=document.getElementById("chart7").getContext("2d");
+if(chart7) chart7.destroy();
+
+chart7=new Chart(ctx,{
+type:"line",
+data:{
+labels:["-6","-5","-4","-3","-2","-1","Today"],
+datasets:[{
+label:"Revenue",
+data:list,
+borderColor:"#a78bfa",
+backgroundColor:"rgba(167,139,250,.2)",
+fill:true,
+tension:.4
+}]
+}
+});
+}
+
+/* ================= STATUS ================= */
+function renderStatus(statusObj){
+
+let html="";
+for(let key in statusObj){
+html+=`
+<div class="card">
+<h3>${key}</h3>
+<div class="count">${statusObj[key].length}</div>
+</div>
+`;
+}
+document.getElementById("statusSection").innerHTML=html;
+}
+
+/* ================= SERVICE ================= */
+function renderService(serviceObj){
+
+if(!serviceObj) return;
+
+const labels=Object.keys(serviceObj);
+const values=Object.values(serviceObj);
+
+if(labels.length===0) return;
+
+const ctx=document.getElementById("serviceChart").getContext("2d");
+if(serviceChart) serviceChart.destroy();
+
+serviceChart=new Chart(ctx,{
+type:"doughnut",
+data:{
+labels:labels,
+datasets:[{
+data:values,
+backgroundColor:[
+"#a78bfa","#93c5fd","#f472b6",
+"#6ee7b7","#facc15","#fb7185"
+]
+}]
+}
+});
+}
+
+/* ================= RECENT ================= */
+function renderRecent(list){
+const box=document.getElementById("recentBox");
+box.innerHTML="";
+
+list.slice(0,10).forEach(o=>{
+box.innerHTML+=`
+<div style="margin-bottom:10px;">
+<strong>${o.order}</strong><br>
+${o.name} - ${o.service} - ${o.price}฿
+</div>
+`;
+});
+}
+
+/* ================= TABLE FULL ================= */
 function renderTable(list){
 
 const tbody=document.querySelector("#orderTable tbody");
 tbody.innerHTML="";
 
-list.forEach(order=>{
+list.forEach(o=>{
 tbody.innerHTML+=`
 <tr>
-<td>${order.date}</td>
-<td>${order.order}</td>
-<td>${order.name}</td>
-<td>${order.service}</td>
+<td>${o.date}</td>
+<td>${o.order}</td>
+<td>${o.name}</td>
+<td>${o.service}</td>
 <td>
-<input value="${order.price}"
-onchange="updateField('${order.order}','ราคา',this.value)">
+<input value="${o.price}"
+onchange="updateField('${o.order}','ราคา',this.value)">
 </td>
 <td>
-<select onchange="updateField('${order.order}','สถานะ',this.value)">
-${statusOptions(order.status)}
+<select onchange="updateField('${o.order}','สถานะ',this.value)">
+${statusOptions(o.status)}
 </select>
 </td>
 </tr>
@@ -258,26 +366,36 @@ ${statusOptions(order.status)}
 }
 
 function statusOptions(current){
-const options=["รอชำระเงิน","ชำระเงินแล้ว","กำลังดำเนินการ","เสร็จงาน","ยกเลิก","หมดประกัน"];
-return options.map(o=>`<option ${o===current?"selected":""}>${o}</option>`).join("");
+const options=[
+"รอชำระเงิน",
+"ชำระเงินแล้ว",
+"กำลังดำเนินการ",
+"เสร็จงาน",
+"ยกเลิก",
+"หมดประกัน"
+];
+
+return options.map(s=>`
+<option ${s===current?"selected":""}>${s}</option>
+`).join("");
 }
 
-/* ===== Update ===== */
+/* ================= UPDATE FIELD ================= */
 async function updateField(orderId,field,value){
 await fetch(API_URL,{
 method:"POST",
 body:JSON.stringify({
 action:"updateOrder",
-orderId,
-field,
-value
+orderId:orderId,
+field:field,
+value:value
 })
 });
-showToast();
+showToast("บันทึกสำเร็จ");
 loadDashboard();
 }
 
-/* ===== Create ===== */
+/* ================= CREATE ORDER ================= */
 async function createOrder(){
 
 const orderData={
@@ -297,32 +415,18 @@ order:orderData
 })
 });
 
-showToast();
+showToast("สร้างออเดอร์สำเร็จ");
+clearForm();
 loadDashboard();
 }
 
-/* ===== Chart ===== */
-function renderChart(data){
-
-const ctx=document.getElementById("chart7").getContext("2d");
-if(chart) chart.destroy();
-
-chart=new Chart(ctx,{
-type:"line",
-data:{
-labels:["-6","-5","-4","-3","-2","-1","Today"],
-datasets:[{
-label:"Revenue",
-data:data,
-borderColor:"#a78bfa",
-backgroundColor:"rgba(167,139,250,.2)",
-fill:true
-}]
-}
-});
+function clearForm(){
+document.getElementById("name").value="";
+document.getElementById("service").value="";
+document.getElementById("price").value="";
 }
 
-/* ===== Search ===== */
+/* ================= SEARCH ================= */
 function filterTable(){
 const value=document.getElementById("search").value.toLowerCase();
 document.querySelectorAll("#orderTable tbody tr").forEach(row=>{
@@ -330,9 +434,10 @@ row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
 });
 }
 
-/* ===== Toast ===== */
-function showToast(){
+/* ================= TOAST ================= */
+function showToast(text){
 const t=document.getElementById("toast");
+t.innerText=text;
 t.classList.add("show");
 setTimeout(()=>t.classList.remove("show"),2000);
 }
